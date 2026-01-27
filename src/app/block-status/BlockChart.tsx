@@ -42,6 +42,8 @@ function formatOunces(value: number) {
 }
 
 export default function BlockChart({ block }: BlockChartProps) {
+    console.log(block.records.length)
+
     const sortedRecords = [...block.records].sort(
         (a, b) => a.date.getTime() - b.date.getTime(),
     );
