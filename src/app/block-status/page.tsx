@@ -1,11 +1,11 @@
 "use client";
 
 import { getDigblockRecords } from "@/data/block-status/actions"
-import { Digblock } from "@/data/block-status/types"
+import { DigblockRecord } from "@/data/block-status/types"
 import { useEffect, useState } from "react"
 
 export default function BlockStatusPage() {
-    const [records, setRecords] = useState<Digblock[]>([])
+    const [records, setRecords] = useState<DigblockRecord[]>([])
 
     async function startLoad() {
         const res = await getDigblockRecords()
