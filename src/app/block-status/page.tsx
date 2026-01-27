@@ -1,13 +1,9 @@
 "use client";
 
+import BlockChart from "./BlockChart"
 import { getDigblockRecords } from "@/data/block-status/actions"
-import { DigblockRecord } from "@/data/block-status/types"
+import { DigblockRecord, DigblockSet } from "@/data/block-status/types"
 import { useEffect, useState } from "react"
-
-type DigblockSet = {
-    id: string,
-    records: DigblockRecord[],
-}
 
 export default function BlockStatusPage() {
     const [records, setRecords] = useState<DigblockRecord[]>([])
@@ -29,20 +25,22 @@ export default function BlockStatusPage() {
         }))
     }
 
-    async function startLoad() {
-        const res = await getDigblockRecords()
-        setRecords(res)
-    }
-
     useEffect(() => {
-        startLoad()
+        void (async () => {
+            const res = await getDigblockRecords()
+            setRecords(res)
+        })()
     }, [])
 
-    return (
-        <div>
-            <div>Block status page</div>
+    const blocks = splitToBlocks(records)
 
-            <div>{JSON.stringify(records, null, 2)}</div>
+    return (
+        <div style={{ padding: 24, display: "grid", gap: 16 }}>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>Block status page</div>
+
+            {blocks.slice(0, 3).map((block) => (
+                <BlockChart key={block.id} block={block} />
+            ))}
         </div>
     )
 

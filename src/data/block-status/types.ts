@@ -8,3 +8,8 @@ export type DigblockRecord = {
     tonnes: number,
     grade: number
 }
+
+export type DigblockSet = {
+    id: string,
+    records: DigblockRecord[],
+}
