@@ -35,7 +35,6 @@ export function TopBar() {
         {state.message ? (
           <span>
             {state.message}
-            {state.ok && state.outputDir ? ` (${state.outputDir})` : ""}
           </span>
         ) : (
           <span>Upload an Excel spreadsheet to generate CSVs.</span>

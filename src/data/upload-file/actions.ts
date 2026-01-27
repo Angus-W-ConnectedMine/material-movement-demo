@@ -7,8 +7,6 @@ import { processExcelFile } from "@/processing/excel-to-csv";
 export type UploadSpreadsheetState = {
     ok: boolean;
     message: string;
-    outputDir?: string;
-    files?: string[];
 };
 
 const allowedExtensions = new Set([".xlsx", ".xls"]);
@@ -49,6 +47,7 @@ export async function uploadSpreadsheet(
     const baseName = buildSafeBaseName(file.name);
     const stamp = timestampSlug();
     const uploadPath = path.join(uploadsDir, `${baseName}-${stamp}${extension}`);
+    console.log(uploadPath)
 
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(uploadPath, buffer);
@@ -56,13 +55,7 @@ export async function uploadSpreadsheet(
     const outputDir = path.join(process.cwd(), "files", "processed", `${baseName}-${stamp}`);
     processExcelFile(uploadPath, outputDir);
 
-    const files = await fs.readdir(outputDir);
-    const relativeOutputDir = path.relative(process.cwd(), outputDir);
-
     return {
-        ok: true,
-        message: `Uploaded and converted ${files.length} sheet${files.length === 1 ? "" : "s"}.`,
-        outputDir: relativeOutputDir,
-        files,
+        ok: true, message: ""
     };
 }

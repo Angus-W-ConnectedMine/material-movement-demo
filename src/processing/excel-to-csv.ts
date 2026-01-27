@@ -51,8 +51,10 @@ function serializeTsvRow(values: unknown[]): string {
         .join("\t");
 }
 
-export function processExcelFile(inputPath: string, outputDir: string) {
-    const workbook = xlsx.readFile(inputPath);
+export async function processExcelFile(inputPath: string, outputDir: string) {
+    const workbookFile = Bun.file(inputPath)
+    const workbookData = await workbookFile.arrayBuffer()
+    const workbook = xlsx.read(workbookData);
     fs.mkdirSync(outputDir, { recursive: true });
 
     for (const sheetName of workbook.SheetNames) {
@@ -109,7 +111,8 @@ export function processExcelFile(inputPath: string, outputDir: string) {
 
         const safeName = sanitizeSheetName(sheetName);
         const outputPath = path.join(outputDir, `${safeName}.csv`);
-        fs.writeFileSync(outputPath, lines.join("\n"), "utf8");
+        const outputFile = Bun.file(outputPath)
+        await outputFile.write(lines.join("\n"))
     }
 }
 
