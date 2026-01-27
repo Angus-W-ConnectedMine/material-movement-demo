@@ -7,7 +7,6 @@ import {
     Line,
     LineChart,
     ResponsiveContainer,
-    Tooltip,
     XAxis,
     YAxis,
 } from "recharts";
@@ -41,6 +40,10 @@ function formatOunces(value: number) {
     }).format(value);
 }
 
+function formatDate(value: Date) {
+    return `${value.getDay()}/${value.getMonth()}`
+}
+
 export default function BlockChart({ block }: BlockChartProps) {
     console.log(block.records.length)
 
@@ -51,7 +54,7 @@ export default function BlockChart({ block }: BlockChartProps) {
     const data: ChartPoint[] = sortedRecords.map((record) => {
         return {
             date: record.date,
-            label: record.date.toString(),
+            label: formatDate(record.date),
             tonnes: record.tonnes,
         };
     });
@@ -64,57 +67,21 @@ export default function BlockChart({ block }: BlockChartProps) {
     const stageLabel = lastRecord?.stage ?? "Unknown";
 
     return (
-        <div
-            style={{
-                background: "#ffffff",
-                borderRadius: 16,
-                padding: 20,
-                border: "1px solid #e5e7eb",
-                boxShadow: "0 6px 18px rgba(15, 23, 42, 0.06)",
-                display: "flex",
-                gap: 16,
-                alignItems: "stretch",
-            }}
-        >
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 12,
-                        gap: 12,
-                    }}
-                >
+        <div className="flex items-stretch gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.06)]">
+            <div className="min-w-0 flex-1">
+                <div className="mb-3 flex items-center justify-between gap-3">
                     <div
-                        style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: "#111827",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                        }}
+                        className="truncate whitespace-nowrap text-[13px] font-semibold text-gray-900"
                         title={block.id}
                     >
                         {block.id}
                     </div>
-                    <div
-                        style={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: "#111827",
-                            background: "#e5e7eb",
-                            padding: "6px 10px",
-                            borderRadius: 999,
-                            whiteSpace: "nowrap",
-                        }}
-                    >
+                    <div className="whitespace-nowrap rounded-full bg-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-900">
                         {stageLabel}
                     </div>
                 </div>
 
-                <div style={{ width: "100%", height: 220 }}>
+                <div className="h-[220px] w-full">
                     <ResponsiveContainer>
                         <LineChart
                             data={data}
@@ -168,19 +135,7 @@ export default function BlockChart({ block }: BlockChartProps) {
                 </div>
             </div>
 
-            <div
-                style={{
-                    width: 220,
-                    flexShrink: 0,
-                    background: "#f9fafb",
-                    border: "1px solid #f3f4f6",
-                    borderRadius: 12,
-                    padding: 16,
-                    display: "grid",
-                    gap: 12,
-                    alignContent: "start",
-                }}
-            >
+            <div className="grid w-[220px] shrink-0 content-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
                 <MetricRow label="Remaining Tonnes" value={`${formatTonnes(designedTonnes)} t`} />
                 <MetricRow label="Designed Tonnes" value={`${formatTonnes(designedTonnes)} t`} />
                 <MetricRow label="Designed Grade" value={`${formatGrade(designedGrade)} g/t`} />
@@ -192,16 +147,9 @@ export default function BlockChart({ block }: BlockChartProps) {
 
 function MetricRow({ label, value }: { label: string; value: string }) {
     return (
-        <div
-            style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                gap: 12,
-            }}
-        >
-            <div style={{ fontSize: 12, color: "#6b7280" }}>{label}</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#111827" }}>{value}</div>
+        <div className="flex items-baseline justify-between gap-3">
+            <div className="text-xs text-gray-500">{label}</div>
+            <div className="text-base font-bold text-gray-900">{value}</div>
         </div>
     );
 }

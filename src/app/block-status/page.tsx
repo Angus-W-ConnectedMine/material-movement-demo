@@ -6,13 +6,12 @@ import { DigblockRecord, DigblockSet } from "@/data/block-status/types"
 import { useEffect, useState } from "react"
 
 export default function BlockStatusPage() {
-    const [records, setRecords] = useState<DigblockRecord[]>([])
     const [blocks, setBlocks] = useState<DigblockSet[]>([])
 
     function splitToBlocks(records: DigblockRecord[]): DigblockSet[] {
         const recordsByID = new Map<string, DigblockRecord[]>()
 
-        for (var record of records) {
+        for (const record of records) {
             if (recordsByID.has(record.digiblockID)) {
                 const recordsInSet = recordsByID.get(record.digiblockID)
                 recordsInSet?.push(record)
@@ -27,7 +26,6 @@ export default function BlockStatusPage() {
     useEffect(() => {
         void (async () => {
             const res = await getDigblockRecords()
-            setRecords(res)
             setBlocks(splitToBlocks(res))
         })()
     }, [])
