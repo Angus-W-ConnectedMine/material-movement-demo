@@ -73,7 +73,7 @@ function inferColumnTypes(rows: string[][], headers: string[]): ColumnInfo[] {
     return columns;
 }
 
-async function findLatestProcessedDir(root: string): Promise<string> {
+async function listProcessedDirs(root: string): Promise<string[]> {
     const entries = await fs.readdir(root, { withFileTypes: true });
     const dirs = entries.filter((entry) => entry.isDirectory());
 
@@ -90,7 +90,7 @@ async function findLatestProcessedDir(root: string): Promise<string> {
     );
 
     stats.sort((a, b) => b.mtimeMs - a.mtimeMs);
-    return stats[0].path;
+    return stats.map((stat) => stat.path);
 }
 
 function parseTabRows(content: string): { headers: string[]; rows: string[][] } {
@@ -118,48 +118,64 @@ function parseTabRows(content: string): { headers: string[]; rows: string[][] } 
 
 export async function generateTypes(root = processedRoot) {
     console.info(`[generate-types] Using processed root: ${root}`);
-    const latestDir = await findLatestProcessedDir(root);
-    console.info(`[generate-types] Latest processed folder: ${latestDir}`);
-    const entries = await fs.readdir(latestDir, { withFileTypes: true });
-    const csvFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith(".csv"));
+    const processedDirs = await listProcessedDirs(root);
+    let wroteCount = 0;
 
-    if (csvFiles.length === 0) {
-        throw new Error(`No CSV files found in ${latestDir}`);
-    }
-
-    console.info(`[generate-types] Found ${csvFiles.length} CSV file(s).`);
-    const typeBlocks: string[] = [];
-
-    for (const file of csvFiles) {
-        const filePath = path.join(latestDir, file.name);
-        console.info(`[generate-types] Reading ${file.name}`);
-        const content = await Bun.file(filePath).text();
-        const { headers, rows } = parseTabRows(content);
-
-        if (headers.length === 0) continue;
-
-        const columns = inferColumnTypes(rows, headers);
-        const typeName = `${toPascalCase(path.basename(file.name, ".csv"))}Row`;
-
-        const lines: string[] = [];
-        lines.push(`export type ${typeName} = {`);
-        for (const column of columns) {
-            lines.push(`    ${column.name}: ${column.type},`);
+    for (const dir of processedDirs) {
+        const outputPath = path.join(dir, "types.ts");
+        if (await Bun.file(outputPath).exists()) {
+            console.info(`[generate-types] Skipping (exists): ${outputPath}`);
+            continue;
         }
-        lines.push("}");
 
-        typeBlocks.push(lines.join("\n"));
+        console.info(`[generate-types] Processing folder: ${dir}`);
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        const csvFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith(".csv"));
+
+        if (csvFiles.length === 0) {
+            console.info(`[generate-types] No CSV files found in ${dir}`);
+            continue;
+        }
+
+        console.info(`[generate-types] Found ${csvFiles.length} CSV file(s).`);
+        const typeBlocks: string[] = [];
+
+        for (const file of csvFiles) {
+            const filePath = path.join(dir, file.name);
+            console.info(`[generate-types] Reading ${file.name}`);
+            const content = await Bun.file(filePath).text();
+            const { headers, rows } = parseTabRows(content);
+
+            if (headers.length === 0) continue;
+
+            const columns = inferColumnTypes(rows, headers);
+            const typeName = `${toPascalCase(path.basename(file.name, ".csv"))}Row`;
+
+            const lines: string[] = [];
+            lines.push(`export type ${typeName} = {`);
+            for (const column of columns) {
+                lines.push(`    ${column.name}: ${column.type},`);
+            }
+            lines.push("}");
+
+            typeBlocks.push(lines.join("\n"));
+        }
+
+        if (typeBlocks.length === 0) {
+            console.info(`[generate-types] No types generated for ${dir}`);
+            continue;
+        }
+
+        await Bun.write(outputPath, `${typeBlocks.join("\n\n")}\n`);
+        console.info(`[generate-types] Wrote ${outputPath}`);
+        wroteCount += 1;
     }
 
-    if (typeBlocks.length === 0) {
-        throw new Error("No types generated from CSV files.");
+    if (wroteCount === 0) {
+        console.info("[generate-types] No new types.ts files created.");
     }
 
-    const outputPath = path.join(latestDir, "types.ts");
-    await Bun.write(outputPath, `${typeBlocks.join("\n\n")}\n`);
-    console.info(`[generate-types] Wrote ${outputPath}`);
-
-    return outputPath;
+    return wroteCount;
 }
 
 if (import.meta.main) {

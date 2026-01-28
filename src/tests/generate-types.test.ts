@@ -9,13 +9,15 @@ function createTempDir(): string {
 }
 
 describe("generateTypes", () => {
-    test("writes types.ts for the latest processed folder", async () => {
+    test("writes types.ts for all processed folders that do not have one", async () => {
         const tempRoot = createTempDir();
         const olderDir = path.join(tempRoot, "older");
         const latestDir = path.join(tempRoot, "latest");
+        const existingDir = path.join(tempRoot, "existing");
 
         fs.mkdirSync(olderDir, { recursive: true });
         fs.mkdirSync(latestDir, { recursive: true });
+        fs.mkdirSync(existingDir, { recursive: true });
 
         const olderCsv = path.join(olderDir, "Sheet1.csv");
         fs.writeFileSync(olderCsv, "name\tage\nAlice\t30\n", "utf8");
@@ -27,13 +29,24 @@ describe("generateTypes", () => {
             "utf8",
         );
 
-        const outputPath = await generateTypes(tempRoot);
-        expect(outputPath).toBe(path.join(latestDir, "types.ts"));
+        const existingTypes = path.join(existingDir, "types.ts");
+        fs.writeFileSync(existingTypes, "export type ExistingRow = { id: string }\n", "utf8");
 
-        const typesContent = fs.readFileSync(outputPath, "utf8");
-        expect(typesContent).toContain("export type Sheet1Row = {");
-        expect(typesContent).toContain("name: string");
-        expect(typesContent).toContain("age: number");
-        expect(typesContent).toContain("code: string");
+        const wroteCount = await generateTypes(tempRoot);
+        expect(wroteCount).toBe(2);
+
+        const olderTypes = fs.readFileSync(path.join(olderDir, "types.ts"), "utf8");
+        expect(olderTypes).toContain("export type Sheet1Row = {");
+        expect(olderTypes).toContain("name: string");
+        expect(olderTypes).toContain("age: number");
+
+        const latestTypes = fs.readFileSync(path.join(latestDir, "types.ts"), "utf8");
+        expect(latestTypes).toContain("export type Sheet1Row = {");
+        expect(latestTypes).toContain("name: string");
+        expect(latestTypes).toContain("age: number");
+        expect(latestTypes).toContain("code: string");
+
+        const existingContent = fs.readFileSync(existingTypes, "utf8");
+        expect(existingContent).toBe("export type ExistingRow = { id: string }\n");
     });
 });
