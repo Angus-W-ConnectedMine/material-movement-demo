@@ -10,7 +10,7 @@ function createTempDir(): string {
 }
 
 describe("processExcelFile", () => {
-    test("creates one CSV per sheet with detected headers and data rows", () => {
+    test("creates one CSV per sheet with detected headers and data rows", async () => {
         const tempDir = createTempDir();
         const inputPath = path.join(tempDir, "input.xlsx");
         const outputDir = path.join(tempDir, "out");
@@ -33,7 +33,7 @@ describe("processExcelFile", () => {
         xlsx.utils.book_append_sheet(wb, ws2, "Sheet Name");
         xlsx.writeFile(wb, inputPath);
 
-        processExcelFile(inputPath, outputDir);
+        await processExcelFile(inputPath, outputDir);
 
         const sheet1Path = path.join(outputDir, "First Sheet.csv");
         const sheet2Path = path.join(outputDir, "Sheet Name.csv");

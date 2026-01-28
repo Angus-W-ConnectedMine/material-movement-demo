@@ -116,8 +116,10 @@ function parseTabRows(content: string): { headers: string[]; rows: string[][] } 
     return { headers, rows };
 }
 
-export async function generateTypes() {
-    const latestDir = await findLatestProcessedDir(processedRoot);
+export async function generateTypes(root = processedRoot) {
+    console.info(`[generate-types] Using processed root: ${root}`);
+    const latestDir = await findLatestProcessedDir(root);
+    console.info(`[generate-types] Latest processed folder: ${latestDir}`);
     const entries = await fs.readdir(latestDir, { withFileTypes: true });
     const csvFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith(".csv"));
 
@@ -125,11 +127,13 @@ export async function generateTypes() {
         throw new Error(`No CSV files found in ${latestDir}`);
     }
 
+    console.info(`[generate-types] Found ${csvFiles.length} CSV file(s).`);
     const typeBlocks: string[] = [];
 
     for (const file of csvFiles) {
         const filePath = path.join(latestDir, file.name);
-        const content = await fs.readFile(filePath, "utf8");
+        console.info(`[generate-types] Reading ${file.name}`);
+        const content = await Bun.file(filePath).text();
         const { headers, rows } = parseTabRows(content);
 
         if (headers.length === 0) continue;
@@ -152,12 +156,15 @@ export async function generateTypes() {
     }
 
     const outputPath = path.join(latestDir, "types.ts");
-    await fs.writeFile(outputPath, `${typeBlocks.join("\n\n")}\n`, "utf8");
+    await Bun.write(outputPath, `${typeBlocks.join("\n\n")}\n`);
+    console.info(`[generate-types] Wrote ${outputPath}`);
 
     return outputPath;
 }
 
-generateTypes().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
+if (import.meta.main) {
+    generateTypes().catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    });
+}
