@@ -6,7 +6,8 @@
     "dev": "bun --bun next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate-types": "bun ./src/processing/generate-types.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
