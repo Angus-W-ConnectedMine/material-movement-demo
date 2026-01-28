@@ -8,6 +8,30 @@ function isEmptyCell(value: unknown): boolean {
     return false;
 }
 
+function isNumericCell(value: unknown): boolean {
+    if (isEmptyCell(value)) return false;
+    if (typeof value === "number") return Number.isFinite(value);
+    const text = String(value).trim();
+    if (text.length === 0) return false;
+    const normalized = text.replace(/,/g, "");
+    return Number.isFinite(Number(normalized));
+}
+
+function isHeaderCandidate(row: unknown[]): boolean {
+    if (!row.some((cell) => !isEmptyCell(cell))) return false;
+
+    let nonNumericCount = 0;
+    for (const cell of row) {
+        if (isEmptyCell(cell)) continue;
+        if (!isNumericCell(cell)) {
+            nonNumericCount += 1;
+            if (nonNumericCount > 1) return true;
+        }
+    }
+
+    return false;
+}
+
 function sanitizeSheetName(name: string): string {
     const trimmed = name.trim();
     if (trimmed.length === 0) return "sheet";
@@ -67,7 +91,7 @@ export async function processExcelFile(inputPath: string, outputDir: string) {
             defval: "",
         }) as unknown[][];
 
-        const headerRowIndex = rows.findIndex((row) => row.some((cell) => !isEmptyCell(cell)));
+        const headerRowIndex = rows.findIndex((row) => isHeaderCandidate(row));
         if (headerRowIndex === -1) continue;
 
         const headerRow = rows[headerRowIndex] ?? [];
