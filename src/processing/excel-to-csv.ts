@@ -119,8 +119,8 @@ export async function processExcelFile(inputPath: string, outputDir: string) {
 /**
  * Converts the headers to camelCase with no spaces
  */
-export function normaliseHeaders(csvPath: string) {
-    const content = fs.readFileSync(csvPath, "utf8");
+export async function normaliseHeaders(csvPath: string) {
+    const content = await Bun.file(csvPath).text();
     if (content.trim().length === 0) return;
 
     const lines = content.split(/\r?\n/);
@@ -130,5 +130,5 @@ export function normaliseHeaders(csvPath: string) {
     const normalized = headers.map(normalizeHeaderValue);
     lines[0] = normalized.join("\t");
 
-    fs.writeFileSync(csvPath, lines.join("\n"), "utf8");
+    await Bun.write(csvPath, lines.join("\n"));
 }

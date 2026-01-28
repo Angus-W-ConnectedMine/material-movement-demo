@@ -20,33 +20,29 @@ describe("generateTypes", () => {
         fs.mkdirSync(existingDir, { recursive: true });
 
         const olderCsv = path.join(olderDir, "Sheet1.csv");
-        fs.writeFileSync(olderCsv, "name\tage\nAlice\t30\n", "utf8");
+        await Bun.write(olderCsv, "name\tage\nAlice\t30\n");
 
         const latestCsv = path.join(latestDir, "Sheet1.csv");
-        fs.writeFileSync(
-            latestCsv,
-            "name\tage\tcode\nAlice\t30\tA1\nBob\t40\tB2\n",
-            "utf8",
-        );
+        await Bun.write(latestCsv, "name\tage\tcode\nAlice\t30\tA1\nBob\t40\tB2\n");
 
         const existingTypes = path.join(existingDir, "types.ts");
-        fs.writeFileSync(existingTypes, "export type ExistingRow = { id: string }\n", "utf8");
+        await Bun.write(existingTypes, "export type ExistingRow = { id: string }\n");
 
         const wroteCount = await generateTypes(tempRoot);
         expect(wroteCount).toBe(2);
 
-        const olderTypes = fs.readFileSync(path.join(olderDir, "types.ts"), "utf8");
+        const olderTypes = await Bun.file(path.join(olderDir, "types.ts")).text();
         expect(olderTypes).toContain("export type Sheet1Row = {");
         expect(olderTypes).toContain("name: string");
         expect(olderTypes).toContain("age: number");
 
-        const latestTypes = fs.readFileSync(path.join(latestDir, "types.ts"), "utf8");
+        const latestTypes = await Bun.file(path.join(latestDir, "types.ts")).text();
         expect(latestTypes).toContain("export type Sheet1Row = {");
         expect(latestTypes).toContain("name: string");
         expect(latestTypes).toContain("age: number");
         expect(latestTypes).toContain("code: string");
 
-        const existingContent = fs.readFileSync(existingTypes, "utf8");
+        const existingContent = await Bun.file(existingTypes).text();
         expect(existingContent).toBe("export type ExistingRow = { id: string }\n");
     });
 });

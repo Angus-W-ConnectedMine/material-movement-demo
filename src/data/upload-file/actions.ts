@@ -1,6 +1,5 @@
 "use server";
 
-import fs from "node:fs/promises";
 import path from "node:path";
 import { processExcelFile } from "@/processing/excel-to-csv";
 
@@ -42,15 +41,13 @@ export async function uploadSpreadsheet(
     }
 
     const uploadsDir = path.join(process.cwd(), "files", "uploads");
-    await fs.mkdir(uploadsDir, { recursive: true });
 
     const baseName = buildSafeBaseName(file.name);
     const stamp = timestampSlug();
     const uploadPath = path.join(uploadsDir, `${baseName}-${stamp}${extension}`);
     console.log(uploadPath)
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(uploadPath, buffer);
+    await Bun.write(uploadPath, await file.arrayBuffer());
 
     const outputDir = path.join(process.cwd(), "files", "processed", `${baseName}-${stamp}`);
     processExcelFile(uploadPath, outputDir);

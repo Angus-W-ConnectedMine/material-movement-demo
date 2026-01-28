@@ -41,26 +41,29 @@ describe("processExcelFile", () => {
         expect(fs.existsSync(sheet1Path)).toBe(true);
         expect(fs.existsSync(sheet2Path)).toBe(true);
 
-        const sheet1Lines = fs.readFileSync(sheet1Path, "utf8").trim().split(/\r?\n/);
+        const sheet1Lines = (await Bun.file(sheet1Path).text()).trim().split(/\r?\n/);
         expect(sheet1Lines[0]).toBe("headerOne\theaderTwo");
         expect(sheet1Lines[1]).toBe("A1\tB1");
         expect(sheet1Lines[2]).toBe("A2\tB2");
 
-        const sheet2Lines = fs.readFileSync(sheet2Path, "utf8").trim().split(/\r?\n/);
+        const sheet2Lines = (await Bun.file(sheet2Path).text()).trim().split(/\r?\n/);
         expect(sheet2Lines[0]).toBe("rl\tmaterialType");
         expect(sheet2Lines[1]).toBe("4850\tLG");
     });
 });
 
 describe("normaliseHeaders", () => {
-    test("rewrites headers to camelCase with no spaces", () => {
+    test("rewrites headers to camelCase with no spaces", async () => {
         const tempDir = createTempDir();
         const csvPath = path.join(tempDir, "data.csv");
-        fs.writeFileSync(csvPath, "My Header\tSecond Header\tRL\nvalue1\tvalue2\t4850\n", "utf8");
+        await Bun.write(
+            csvPath,
+            "My Header\tSecond Header\tRL\nvalue1\tvalue2\t4850\n",
+        );
 
-        normaliseHeaders(csvPath);
+        await normaliseHeaders(csvPath);
 
-        const lines = fs.readFileSync(csvPath, "utf8").trim().split(/\r?\n/);
+        const lines = (await Bun.file(csvPath).text()).trim().split(/\r?\n/);
         expect(lines[0]).toBe("myHeader\tsecondHeader\trl");
         expect(lines[1]).toBe("value1\tvalue2\t4850");
     });

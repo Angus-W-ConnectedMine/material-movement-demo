@@ -84,7 +84,7 @@ async function listProcessedDirs(root: string): Promise<string[]> {
     const stats = await Promise.all(
         dirs.map(async (dir) => {
             const fullPath = path.join(root, dir.name);
-            const stat = await fs.stat(fullPath);
+            const stat = await Bun.file(fullPath).stat();
             return { path: fullPath, mtimeMs: stat.mtimeMs };
         }),
     );
