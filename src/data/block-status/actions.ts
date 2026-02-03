@@ -11,16 +11,14 @@ export async function getDigblockRecords(): Promise<DigblockRecord[]> {
     const dailyProductionFilePath = "./src/records/Daily Production.csv"
     const dailyProdRows = await parseCSV<DailyProductionRow>(dailyProductionFilePath)
 
-    
     const dailyProdRowsWithDate = dailyProdRows.map((row) => ({
-        ...row,
-        date: new Date(row.date.split('/').reverse().join('-'))
+        ...row
     }))
     const mappedRowsByID = Map.groupBy<string, ProdRow>(dailyProdRowsWithDate, row => row.digblock)
 
     const records = digblockRows.map((row) => ({
         ...row,
-        tonnes: parseFloat(row.tonnes.replaceAll(',', '')),
+        tonnes: row.tonnes.length > 0 ? parseFloat(row.tonnes.replaceAll(',', '')) : 0,
         prodRows: mappedRowsByID.get(row.digiblockID) ?? []
     }));
 

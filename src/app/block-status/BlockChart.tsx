@@ -1,6 +1,6 @@
 "use client";
 
-import { DigblockSet } from "@/data/block-status/types";
+import { DigblockRecord } from "@/data/block-status/types";
 import {
     Area,
     CartesianGrid,
@@ -12,11 +12,11 @@ import {
 } from "recharts";
 
 type BlockChartProps = {
-    block: DigblockSet;
+    block: DigblockRecord;
 };
 
 type ChartPoint = {
-    date: Date;
+    date: string;
     label: string;
     tonnes: number;
 };
@@ -45,26 +45,35 @@ function formatDate(value: Date) {
 }
 
 export default function BlockChart({ block }: BlockChartProps) {
-    console.log(block.records.length)
+    const initialTonnes = block.tonnes
+    let currentTonnes = initialTonnes;
 
-    const sortedRecords = [...block.records].sort(
-        (a, b) => a.date.getTime() - b.date.getTime(),
-    );
+    let rowsByDay = Map.groupBy(block.prodRows, r => r.date)
+    let days = rowsByDay.keys().toArray().sort()
+    
+    let data: ChartPoint[] = [];
 
-    const data: ChartPoint[] = sortedRecords.map((record) => {
-        return {
-            date: record.date,
-            label: formatDate(record.date),
-            tonnes: record.tonnes,
-        };
-    });
+    for (let date of days) {
+        let rows = rowsByDay.get(date) ?? []
+        let dailyChange = rows.reduce((sum, r) => sum + r.tonnesTruck, 0)
 
-    const lastRecord = sortedRecords[sortedRecords.length - 1];
+        let point = {
+            date,
+            label: date,
+            tonnes: currentTonnes,
+        }
 
-    const designedTonnes = lastRecord?.tonnes ?? 0;
-    const designedGrade = lastRecord?.grade ?? 0;
+        data.push(point)
+
+        currentTonnes -= dailyChange
+    }
+
+    const lastRecord = block.prodRows[block.prodRows.length - 1];
+
+    const designedTonnes = lastRecord?.tonnesTruck ?? 0;
+    const designedGrade = lastRecord?.tonnesTruck ?? 0;
     const designedOunces = designedTonnes * designedGrade / 31.1035;
-    const stageLabel = lastRecord?.stage ?? "Unknown";
+    const stageLabel = "Unknown";
 
     return (
         <div className="flex items-stretch gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.06)]">
@@ -72,9 +81,9 @@ export default function BlockChart({ block }: BlockChartProps) {
                 <div className="mb-3 flex items-center justify-between gap-3">
                     <div
                         className="truncate whitespace-nowrap text-[13px] font-semibold text-gray-900"
-                        title={block.id}
+                        title={block.digiblockID}
                     >
-                        {block.id}
+                        {block.digiblockID}
                     </div>
                     <div className="whitespace-nowrap rounded-full bg-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-900">
                         {stageLabel}

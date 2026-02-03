@@ -11,11 +11,6 @@ export type DigblockRecord = {
 
 export type ProdRow = {
     digblock: string,
-    date: Date,
+    date: string,
     tonnesTruck: number,
-}
-
-export type DigblockSet = {
-    id: string,
-    records: DigblockRecord[],
 }
