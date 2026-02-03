@@ -5,11 +5,13 @@ import { parseCSV } from "../parseCSV";
 import { DigblockRecord, ProdRow } from "./types";
 
 export async function getDigblockRecords(): Promise<DigblockRecord[]> {
-    const digblocksFilePath = "@/src/records/CPO Digblocks.csv"
+    const digblocksFilePath = "./src/records/CPO Digblocks.csv"
     const digblockRows = await parseCSV<CPODigblocksRow>(digblocksFilePath) 
 
-    const dailyProductionFilePath = "@/src/records/Daily Production.csv"
-    const dailyProdRows = await parseCSV(dailyProductionFilePath) as DailyProductionRow[]
+    const dailyProductionFilePath = "./src/records/Daily Production.csv"
+    const dailyProdRows = await parseCSV<DailyProductionRow>(dailyProductionFilePath)
+
+    
     const dailyProdRowsWithDate = dailyProdRows.map((row) => ({
         ...row,
         date: new Date(row.date.split('/').reverse().join('-'))
