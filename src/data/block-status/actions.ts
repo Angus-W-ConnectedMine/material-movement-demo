@@ -1,19 +1,26 @@
 "use server";
 
+import { CPODigblocksRow, DailyProductionRow } from "@/records/types";
 import { parseCSV } from "../parseCSV";
-import { DigblockRecord } from "./types";
+import { DigblockRecord, ProdRow } from "./types";
 
-type RawDigblockRecord = Omit<DigblockRecord, "date"> & { date: string };
+export async function getDigblockRecords(): Promise<DigblockRecord[]> {
+    const digblocksFilePath = "@/src/records/CPO Digblocks.csv"
+    const digblockRows = await parseCSV<CPODigblocksRow>(digblocksFilePath) 
 
-export async function getDigblockRecords() {
-    const filePath = "./files/digblocks.csv"
+    const dailyProductionFilePath = "@/src/records/Daily Production.csv"
+    const dailyProdRows = await parseCSV(dailyProductionFilePath) as DailyProductionRow[]
+    const dailyProdRowsWithDate = dailyProdRows.map((row) => ({
+        ...row,
+        date: new Date(row.date.split('/').reverse().join('-'))
+    }))
+    const mappedRowsByID = Map.groupBy<string, ProdRow>(dailyProdRowsWithDate, row => row.digblock)
 
-    const records = await parseCSV(filePath) as RawDigblockRecord[]
-
-    const mappedRecords = records.map((record) => ({
-        ...record,
-        date: new Date(record.date.split('/').reverse().join('-')),
+    const records = digblockRows.map((row) => ({
+        ...row,
+        tonnes: parseFloat(row.tonnes.replaceAll(',', '')),
+        prodRows: mappedRowsByID.get(row.digiblockID) ?? []
     }));
 
-    return mappedRecords as DigblockRecord[];
+    return records;
 }

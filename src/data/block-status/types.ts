@@ -1,12 +1,18 @@
 export type DigblockRecord = {
-    date: Date,
     flitch: number,
     digiblockID: string,
-    stage: string,
-    rl: string,
+    stage: number,
+    rl: number,
     materialType: string,
     tonnes: number,
-    grade: number
+    grade: number,
+    prodRows: ProdRow[],
+}
+
+export type ProdRow = {
+    digblock: string,
+    date: Date,
+    tonnesTruck: number,
 }
 
 export type DigblockSet = {
